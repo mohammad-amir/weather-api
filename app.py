@@ -1,9 +1,10 @@
 from fastapi import FastAPI, HTTPException, Request
-
+from flask import Flask, jsonify, make_response
 from cachetools import TTLCache
 import httpx
 import math
 import json
+import gzip
 
 app = FastAPI(title="Weather API")
 
@@ -151,32 +152,49 @@ async def weather_now(
     unit: str = "m",
     lang: str = "zh"
 ):
-    return {
-        "code": "200",
-        "updateTime": "2026-06-15T22:00+08:00",
+    mock_payload = {
+        "code": "200",  # "200" string means success in QWeather
+        "updateTime": "2026-06-15T23:00+02:00",
         "fxLink": "https://www.qweather.com",
         "now": {
-            "obsTime": "2026-06-15T22:00+08:00",
-            "temp": "25",
-            "feelsLike": "25",
-            "icon": "100",
-            "text": "晴",
+            "obsTime": "2026-06-15T22:50+02:00",
+            "temp": "21",       # Must be a string
+            "feelsLike": "21",  # Must be a string
+            "icon": "101",      # 101 = Cloudy, 100 = Clear. Clock matches icon number to display BMPs
+            "text": "Cloudy",
             "wind360": "180",
-            "windDir": "南风",
+            "windDir": "South",
             "windScale": "2",
-            "windSpeed": "10",
-            "humidity": "60",
+            "windSpeed": "7",
+            "humidity": "65",
             "precip": "0.0",
-            "pressure": "1013",
+            "pressure": "1012",
             "vis": "10",
-            "cloud": "0",
-            "dew": "0"
+            "cloud": "20",
+            "dew": "12"
         },
         "refer": {
-            "sources": ["QWeather"],
-            "license": ["QWeather Developers License"]
+            "sources": ["Custom API"],
+            "license": ["commercial license"]
         }
     }
+
+    # 1. Convert payload into a dense JSON string without whitespace pads
+    compact_json = json.dumps(mock_payload, separators=(',', ':')).encode('utf-8')
+    
+    # 2. Compress the string payload into GZIP binary format
+    gzip_buffer = gzip.compress(compact_json)
+    
+    # 3. Formulate the response with required headers
+    response = make_response(gzip_buffer)
+    response.headers['Content-Type'] = 'application/json; charset=utf-8'
+    response.headers['Content-Encoding'] = 'gzip'  # Critical for the clock's client reader
+    response.headers['Content-Length'] = len(gzip_buffer)
+    
+    # 4. Clear unnecessary headers to keep header buffer small
+    response.headers.pop('Server', None)
+    
+    return response
 
 
 @app.get("/v7/old/weather/now")
