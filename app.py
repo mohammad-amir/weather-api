@@ -144,7 +144,7 @@ async def city_lookup(location: str):
         "location": locations
     }
 
-@app.get("/v7/old/weather/now")
+@app.get("/v7/weather/now")
 async def weather_now(
     location: str,
     request: Request,
