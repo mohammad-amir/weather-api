@@ -46,6 +46,7 @@ async def health():
     return {"status": "ok"}
 
 async def get_coordinates(location: str) -> tuple[float, float]:
+    print(f"get_coordinates called: {location}")
     """
     Accepts:
         52.52,13.41
@@ -105,7 +106,7 @@ async def get_coordinates(location: str) -> tuple[float, float]:
 
 @app.get("/geo/v2/city/lookup")
 async def city_lookup(location: str):
-
+    print(f"city lookup called: {location}")
     url = (
         "https://geocoding-api.open-meteo.com/v1/search"
         f"?name={location}&count=10&language=en&format=json"
@@ -140,7 +141,7 @@ async def weather_now(location: str):
     """
     location=52.52,13.41
     """
-
+    print(f"weather now called: {location}")
     if location in cache:
         return cache[location]
 
@@ -244,7 +245,7 @@ async def weather_now(location: str):
 
 @app.get("/v7/weather/3d")
 async def weather_3d(location: str):
-
+    print(f"weather 3d called: {location}")
     lat, lon = await get_coordinates(location)
 
     url = (
@@ -282,8 +283,8 @@ async def weather_3d(location: str):
     }
 
 @app.get("/v7/weather/7d")
-async def weather_3d(location: str):
-
+async def weather_7d(location: str):
+    print(f"weather 7d called: {location}")
     lat, lon = await get_coordinates(location)
 
     url = (
@@ -322,7 +323,7 @@ async def weather_3d(location: str):
 
 @app.get("/v7/air/now")
 async def air_now(location: str):
-
+    print(f"air now called: {location}")
     lat, lon = await get_coordinates(location)
 
     url = (
