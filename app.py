@@ -1,7 +1,9 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+
 from cachetools import TTLCache
 import httpx
 import math
+import json
 
 app = FastAPI(title="Weather API")
 
@@ -9,25 +11,25 @@ app = FastAPI(title="Weather API")
 cache = TTLCache(maxsize=1000, ttl=300)
 
 WEATHER_CODES = {
-    0: ("100", "Clear"),
-    1: ("101", "Mainly Clear"),
-    2: ("102", "Partly Cloudy"),
-    3: ("103", "Cloudy"),
-    45: ("501", "Fog"),
-    48: ("501", "Fog"),
-    51: ("305", "Light Drizzle"),
-    53: ("306", "Drizzle"),
-    55: ("307", "Heavy Drizzle"),
-    61: ("306", "Rain"),
-    63: ("307", "Rain"),
-    65: ("308", "Heavy Rain"),
-    71: ("400", "Snow"),
-    73: ("401", "Snow"),
-    75: ("402", "Heavy Snow"),
-    80: ("300", "Rain Shower"),
-    81: ("301", "Rain Shower"),
-    82: ("302", "Heavy Rain Shower"),
-    95: ("302", "Thunderstorm"),
+    0: ("100", "晴"),
+    1: ("101", "晴"),
+    2: ("102", "少云"),
+    3: ("103", "多云"),
+    45: ("501", "雾"),
+    48: ("501", "雾"),
+    51: ("305", "毛毛雨"),
+    53: ("306", "小雨"),
+    55: ("307", "中雨"),
+    61: ("306", "小雨"),
+    63: ("307", "中雨"),
+    65: ("308", "大雨"),
+    71: ("400", "小雪"),
+    73: ("401", "中雪"),
+    75: ("402", "大雪"),
+    80: ("300", "阵雨"),
+    81: ("301", "强阵雨"),
+    82: ("302", "暴雨"),
+    95: ("302", "雷暴"),
 }
 
 DIRECTIONS = [
@@ -136,8 +138,22 @@ async def city_lookup(location: str):
     }
 
 
+
 @app.get("/v7/weather/now")
-async def weather_now(location: str):
+async def weather_now(
+    location: str,
+    request: Request,
+    key: str = "",
+    unit: str = "m",
+    lang: str = "zh"
+):
+    print(
+        f"weather now called: "
+        f"location={location} "
+        f"key={key} "
+        f"unit={unit} "
+        f"lang={lang}"
+    )
     """
     location=52.52,13.41
     """
@@ -194,7 +210,7 @@ async def weather_now(location: str):
     response = {
         "code": "200",
         "updateTime": current["time"],
-        "fxLink": f"https://your-domain.com/weather/{location}",
+        "fxLink": "https://www.qweather.com",
         "now": {
             "obsTime": current["time"],
             "temp": str(round(current["temperature_2m"])),
@@ -232,13 +248,15 @@ async def weather_now(location: str):
             "cloud": str(
                 current["cloud_cover"]
             ),
-            "dew": ""
+            "dew": "0"
         },
         "refer": {
-            "sources": ["Open-Meteo"]
+            "sources": ["Open-Meteo"],
+            "license": ["CC BY 4.0"]
         }
     }
 
+    print(json.dumps(response, ensure_ascii=False))
     cache[location] = response
 
     return response
