@@ -145,7 +145,6 @@ async def weather_now(
     unit: str = "m",
     lang: str = "zh"
 ):
-
     return {
         "code": "200",
         "updateTime": "2026-06-15T22:00+08:00",
