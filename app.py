@@ -1,8 +1,9 @@
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Response
 from cachetools import TTLCache
 import httpx
 import math
-import json, gzip
+import json
+import gzip
 
 app = FastAPI(title="Weather API")
 
@@ -163,10 +164,15 @@ def weather():
             "vis": 10,
             "cloud": 0,
             "dew": 0
+        },
+        "refer": {
+            "sources": ["QWeather"],
+            "license": ["QWeather Developers License"]
         }
     }
 
-    raw = json.dumps(data).encode("utf-8")
+    # IMPORTANT: stable JSON encoding
+    raw = json.dumps(data, ensure_ascii=False).encode("utf-8")
     gz = gzip.compress(raw)
 
     return Response(
