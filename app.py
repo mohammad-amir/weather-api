@@ -1,5 +1,4 @@
 from fastapi import FastAPI, HTTPException, Request
-from flask import Flask, jsonify, make_response
 from cachetools import TTLCache
 import httpx
 import math
@@ -300,17 +299,6 @@ async def weather_now(
     print(json.dumps(response, ensure_ascii=False))
     cache[location] = response
 
-     # 2. Compress the string payload into GZIP binary format
-    gzip_buffer = gzip.compress(response)
-    
-    # 3. Formulate the response with required headers
-    response = make_response(gzip_buffer)
-    response.headers['Content-Type'] = 'application/json; charset=utf-8'
-    response.headers['Content-Encoding'] = 'gzip'  # Critical for the clock's client reader
-    response.headers['Content-Length'] = len(gzip_buffer)
-    
-    # 4. Clear unnecessary headers to keep header buffer small
-    response.headers.pop('Server', None)
     return response
 
 @app.get("/v7/weather/3d")
