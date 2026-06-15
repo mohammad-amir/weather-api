@@ -143,7 +143,7 @@ async def city_lookup(location: str):
         "location": locations
     }
 
-@app.get("/v7/weather/now")
+@app.get("/v7/fixed/weather/now")
 def weather():
     data = {
         "code": "200",
@@ -185,7 +185,7 @@ def weather():
         }
     )
 
-@app.get("/v7/old/weather/now")
+@app.get("/v7/weather/now")
 async def weather_now(
     location: str,
     request: Request,
@@ -305,7 +305,18 @@ async def weather_now(
     print(json.dumps(response, ensure_ascii=False))
     cache[location] = response
 
-    return response
+    raw = json.dumps(response, ensure_ascii=False).encode("utf-8")
+    gz = gzip.compress(raw)
+
+    return Response(
+        content=gz,
+        media_type="application/json",
+        headers={
+            "Content-Encoding": "gzip",
+            "Connection": "close",
+            "Vary": "Accept-Encoding"
+        }
+    )
 
 @app.get("/v7/weather/3d")
 async def weather_3d(location: str):
