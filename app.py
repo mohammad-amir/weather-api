@@ -238,7 +238,7 @@ async def weather_3d(location: str):
         "temperature_2m_min,"
         "precipitation_probability_max,"
         "wind_speed_10m_max"
-        "&forecast_days=3"
+        "&forecast_days=7"
     )
 
     async with httpx.AsyncClient() as client:
