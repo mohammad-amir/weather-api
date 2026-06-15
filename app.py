@@ -137,9 +137,38 @@ async def city_lookup(location: str):
         "location": locations
     }
 
-
-
 @app.get("/v7/weather/now")
+async def weather_now(...):
+
+    return {
+        "code": "200",
+        "updateTime": "2026-06-15T22:00+08:00",
+        "fxLink": "https://www.qweather.com",
+        "now": {
+            "obsTime": "2026-06-15T22:00+08:00",
+            "temp": "25",
+            "feelsLike": "25",
+            "icon": "100",
+            "text": "晴",
+            "wind360": "180",
+            "windDir": "南风",
+            "windScale": "2",
+            "windSpeed": "10",
+            "humidity": "60",
+            "precip": "0.0",
+            "pressure": "1013",
+            "vis": "10",
+            "cloud": "0",
+            "dew": "0"
+        },
+        "refer": {
+            "sources": ["QWeather"],
+            "license": ["QWeather Developers License"]
+        }
+    }
+
+
+@app.get("/v7/old/weather/now")
 async def weather_now(
     location: str,
     request: Request,
