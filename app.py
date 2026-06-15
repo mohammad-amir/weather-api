@@ -37,7 +37,6 @@ DIRECTIONS = [
     "S", "SW", "W", "NW"
 ]
 
-
 def deg_to_dir(deg):
     idx = round(deg / 45) % 8
     return DIRECTIONS[idx]
@@ -46,6 +45,13 @@ def deg_to_dir(deg):
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+@app.middleware("http")
+async def log_requests(request, call_next):
+    print("REQUEST:", request.method, request.url)
+    response = await call_next(request)
+    print("RESPONSE:", response.status_code)
+    return response
 
 async def get_coordinates(location: str) -> tuple[float, float]:
     print(f"get_coordinates called: {location}")
