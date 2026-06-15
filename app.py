@@ -3,8 +3,7 @@ from flask import Flask, jsonify, make_response
 from cachetools import TTLCache
 import httpx
 import math
-import json
-import gzip
+import json, gzip
 
 app = FastAPI(title="Weather API")
 
@@ -149,44 +148,35 @@ def weather():
     data = {
         "code": "200",
         "updateTime": "2026-06-15T22:00+08:00",
-        "fxLink": "https://www.qweather.com",
         "now": {
             "obsTime": "2026-06-15T22:00+08:00",
-            "temp": "25",
-            "feelsLike": "25",
+            "temp": 25,
+            "feelsLike": 25,
             "icon": "100",
-            "text": "晴",
-            "wind360": "180",
-            "windDir": "南风",
-            "windScale": "2",
-            "windSpeed": "10",
-            "humidity": "60",
-            "precip": "0.0",
-            "pressure": "1013",
-            "vis": "10",
-            "cloud": "0",
-            "dew": "0"
-        },
-        "refer": {
-            "sources": ["QWeather"],
-            "license": ["QWeather Developers License"]
+            "text": "Clear",
+            "wind360": 180,
+            "windDir": "South",
+            "windScale": 2,
+            "windSpeed": 10,
+            "humidity": 60,
+            "precip": 0.0,
+            "pressure": 1013,
+            "vis": 10,
+            "cloud": 0,
+            "dew": 0
         }
     }
 
-    # Convert JSON → bytes
-    json_bytes = json.dumps(data).encode("utf-8")
-
-    # Gzip compress
-    gzipped = gzip.compress(json_bytes)
+    raw = json.dumps(data).encode("utf-8")
+    gz = gzip.compress(raw)
 
     return Response(
-        gzipped,
-        status=200,
-        mimetype="application/json",
+        content=gz,
+        media_type="application/json",
         headers={
             "Content-Encoding": "gzip",
-            "Content-Length": str(len(gzipped)),
-            "Connection": "close"
+            "Connection": "close",
+            "Vary": "Accept-Encoding"
         }
     )
 
