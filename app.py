@@ -45,6 +45,64 @@ def deg_to_dir(deg):
 async def health():
     return {"status": "ok"}
 
+async def get_coordinates(location: str) -> tuple[float, float]:
+    """
+    Accepts:
+        52.52,13.41
+        Berlin
+        London
+        Tokyo
+
+    Returns:
+        (latitude, longitude)
+    """
+
+    # Coordinates already supplied
+    if "," in location:
+        try:
+            lat, lon = location.split(",", 1)
+            return float(lat), float(lon)
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid coordinates"
+            )
+
+    # City lookup
+    url = (
+        "https://geocoding-api.open-meteo.com/v1/search"
+        f"?name={location}"
+        "&count=1"
+        "&language=en"
+        "&format=json"
+    )
+
+    async with httpx.AsyncClient(timeout=10) as client:
+        r = await client.get(url)
+
+    if r.status_code != 200:
+        raise HTTPException(
+            status_code=502,
+            detail="Geocoding provider unavailable"
+        )
+
+    data = r.json()
+
+    results = data.get("results")
+
+    if not results:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Location '{location}' not found"
+        )
+
+    result = results[0]
+
+    return (
+        float(result["latitude"]),
+        float(result["longitude"])
+    )
+
 @app.get("/geo/v2/city/lookup")
 async def city_lookup(location: str):
 
@@ -87,7 +145,7 @@ async def weather_now(location: str):
         return cache[location]
 
     try:
-        lat, lon = location.split(",")
+        lat, lon = await get_coordinates(location)
         lat = float(lat)
         lon = float(lon)
     except Exception:
@@ -187,7 +245,7 @@ async def weather_now(location: str):
 @app.get("/v7/weather/3d")
 async def weather_3d(location: str):
 
-    lat, lon = map(float, location.split(","))
+    lat, lon = await get_coordinates(location)
 
     url = (
         "https://api.open-meteo.com/v1/forecast"
@@ -226,7 +284,7 @@ async def weather_3d(location: str):
 @app.get("/v7/weather/7d")
 async def weather_3d(location: str):
 
-    lat, lon = map(float, location.split(","))
+    lat, lon = await get_coordinates(location)
 
     url = (
         "https://api.open-meteo.com/v1/forecast"
@@ -265,7 +323,7 @@ async def weather_3d(location: str):
 @app.get("/v7/air/now")
 async def air_now(location: str):
 
-    lat, lon = map(float, location.split(","))
+    lat, lon = await get_coordinates(location)
 
     url = (
         "https://air-quality-api.open-meteo.com/v1/air-quality"
