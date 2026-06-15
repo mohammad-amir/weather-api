@@ -138,7 +138,13 @@ async def city_lookup(location: str):
     }
 
 @app.get("/v7/weather/now")
-async def weather_now(...):
+async def weather_now(
+    location: str,
+    request: Request,
+    key: str = "",
+    unit: str = "m",
+    lang: str = "zh"
+):
 
     return {
         "code": "200",
