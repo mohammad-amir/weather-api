@@ -45,6 +45,37 @@ def deg_to_dir(deg):
 async def health():
     return {"status": "ok"}
 
+@app.get("/geo/v2/city/lookup")
+async def city_lookup(location: str):
+
+    url = (
+        "https://geocoding-api.open-meteo.com/v1/search"
+        f"?name={location}&count=10&language=en&format=json"
+    )
+
+    async with httpx.AsyncClient() as client:
+        r = await client.get(url)
+
+    data = r.json()
+
+    locations = []
+
+    for item in data.get("results", []):
+        locations.append({
+            "name": item["name"],
+            "id": str(item["id"]),
+            "lat": str(item["latitude"]),
+            "lon": str(item["longitude"]),
+            "adm2": item.get("admin2", ""),
+            "adm1": item.get("admin1", ""),
+            "country": item.get("country", "")
+        })
+
+    return {
+        "code": "200",
+        "location": locations
+    }
+
 
 @app.get("/v1/weather/now")
 async def weather_now(location: str):
@@ -152,3 +183,114 @@ async def weather_now(location: str):
     cache[location] = response
 
     return response
+
+@app.get("/v7/weather/3d")
+async def weather_3d(location: str):
+
+    lat, lon = map(float, location.split(","))
+
+    url = (
+        "https://api.open-meteo.com/v1/forecast"
+        f"?latitude={lat}"
+        f"&longitude={lon}"
+        "&daily="
+        "weather_code,"
+        "temperature_2m_max,"
+        "temperature_2m_min,"
+        "precipitation_probability_max,"
+        "wind_speed_10m_max"
+        "&forecast_days=3"
+    )
+
+    async with httpx.AsyncClient() as client:
+        data = (await client.get(url)).json()
+
+    daily = []
+
+    for i in range(3):
+        daily.append({
+            "fxDate": data["daily"]["time"][i],
+            "tempMax": str(data["daily"]["temperature_2m_max"][i]),
+            "tempMin": str(data["daily"]["temperature_2m_min"][i]),
+            "humidity": "",
+            "precip": str(
+                data["daily"]["precipitation_probability_max"][i]
+            )
+        })
+
+    return {
+        "code": "200",
+        "daily": daily
+    }
+
+@app.get("/v7/weather/7d")
+async def weather_3d(location: str):
+
+    lat, lon = map(float, location.split(","))
+
+    url = (
+        "https://api.open-meteo.com/v1/forecast"
+        f"?latitude={lat}"
+        f"&longitude={lon}"
+        "&daily="
+        "weather_code,"
+        "temperature_2m_max,"
+        "temperature_2m_min,"
+        "precipitation_probability_max,"
+        "wind_speed_10m_max"
+        "&forecast_days=3"
+    )
+
+    async with httpx.AsyncClient() as client:
+        data = (await client.get(url)).json()
+
+    daily = []
+
+    for i in range(7):
+        daily.append({
+            "fxDate": data["daily"]["time"][i],
+            "tempMax": str(data["daily"]["temperature_2m_max"][i]),
+            "tempMin": str(data["daily"]["temperature_2m_min"][i]),
+            "humidity": "",
+            "precip": str(
+                data["daily"]["precipitation_probability_max"][i]
+            )
+        })
+
+    return {
+        "code": "200",
+        "daily": daily
+    }
+
+@app.get("/v7/air/now")
+async def air_now(location: str):
+
+    lat, lon = map(float, location.split(","))
+
+    url = (
+        "https://air-quality-api.open-meteo.com/v1/air-quality"
+        f"?latitude={lat}"
+        f"&longitude={lon}"
+        "&current="
+        "pm10,pm2_5,carbon_monoxide,"
+        "nitrogen_dioxide,ozone,"
+        "sulphur_dioxide,us_aqi"
+    )
+
+    async with httpx.AsyncClient() as client:
+        data = (await client.get(url)).json()
+
+    current = data["current"]
+
+    return {
+        "code": "200",
+        "now": {
+            "aqi": str(current.get("us_aqi", "")),
+            "pm2p5": str(current.get("pm2_5", "")),
+            "pm10": str(current.get("pm10", "")),
+            "no2": str(current.get("nitrogen_dioxide", "")),
+            "so2": str(current.get("sulphur_dioxide", "")),
+            "co": str(current.get("carbon_monoxide", "")),
+            "o3": str(current.get("ozone", ""))
+        }
+    }
