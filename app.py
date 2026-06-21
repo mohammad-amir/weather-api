@@ -143,49 +143,50 @@ async def city_lookup(location: str):
         "location": locations
     }
 
-@app.get("/v7/fixed/weather/now")
+@app.get("/v7/weather/now")
 def weather():
+    # FIX 1: Explicitly cast all numeric values into strings to match standard QWeather SDK expectations
     data = {
         "code": "200",
-        "updateTime": "2026-06-15T22:00+08:00",
+        "updateTime": "2026-06-21T22:00+08:00",
         "now": {
-            "obsTime": "2026-06-15T22:00+08:00",
-            "temp": 25,
-            "feelsLike": 25,
+            "obsTime": "2026-06-21T22:00+08:00",
+            "temp": "25",         # String format required
+            "feelsLike": "25",    # String format required
             "icon": "100",
             "text": "Clear",
-            "wind360": 180,
+            "wind360": "180",
             "windDir": "South",
-            "windScale": 2,
-            "windSpeed": 10,
-            "humidity": 60,
-            "precip": 0.0,
-            "pressure": 1013,
-            "vis": 10,
-            "cloud": 0,
-            "dew": 0
-        },
-        "refer": {
-            "sources": ["QWeather"],
-            "license": ["QWeather Developers License"]
+            "windScale": "2",
+            "windSpeed": "10",
+            "humidity": "60",     # String format required
+            "precip": "0.0",
+            "pressure": "1013",
+            "vis": "10",
+            "cloud": "0",
+            "dew": "0"
         }
+        # Removed the 'refer' object block to save precious ESP8266 heap memory
     }
 
-    # IMPORTANT: stable JSON encoding
     raw = json.dumps(data, ensure_ascii=False).encode("utf-8")
     gz = gzip.compress(raw)
 
     return Response(
         content=gz,
-        media_type="application/json",
+        # FIX 2: Using application/octet-stream instead of application/json 
+        # stops Cloudflare from trying to re-compress the pre-zipped data bundle.
+        media_type="application/octet-stream",
         headers={
             "Content-Encoding": "gzip",
             "Connection": "close",
-            "Vary": "Accept-Encoding"
+            "Vary": "Accept-Encoding",
+            # FIX 3: Force proxy caches to keep hands off the binary layout transformation
+            "Cache-Control": "no-transform, no-cache, must-revalidate"
         }
     )
-
-@app.get("/v7/weather/now")
+    
+@app.get("/v7/dd/weather/now")
 async def weather_now(
     location: str,
     request: Request,
